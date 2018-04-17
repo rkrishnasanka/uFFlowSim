@@ -974,7 +974,7 @@ public:
     }
 };
 
-int main() {
+int main(int argc, char * argv[]) {
     /* Play with these constants, if you want */
     const int sizeX = 128;
     const int sizeY = 128;
@@ -983,6 +983,27 @@ int main() {
     const double timestep = 0.005;
     
     unsigned char *image = new unsigned char[sizeX*sizeY*4];
+
+
+    double x, y, w, h, d, u, v;
+    if (argc > 1) {
+        x = atof(argv[1]);
+        y = atof(argv[2]);
+        w = atof(argv[3]);
+        h = atof(argv[4]);
+        d = atof(argv[5]);
+        u = atof(argv[6]);
+        v = atof(argv[7]);
+    } else {
+        x = 0.0;
+        y = 0.0;
+        w = 1.0;
+        h = 1.0;
+        d = 1.0;
+        u = 0.0;
+        v = 2.0;
+    }
+
     
     vector<SolidBody *> bodies;
     bodies.push_back(new SolidSphere(0.6, 0.7, 0.4, 0.1, M_PI*0.25, 0.0, 0.0, 0.0));
@@ -997,10 +1018,10 @@ int main() {
     double time = 0.0;
     int iterations = 0;
     
-    while (time < 8.0) {
+    while (time < 2.0) {
         for (int i = 0; i < 4; i++) {
             // solver->addInflow(0.45, 0.2, 0.15, 0.03, 1.0, 0.0, 3.0);
-            solver->addInflow(0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 2.0);
+            solver->addInflow(x, y, w, h, d, u, v);
             solver->update(timestep);
             time += timestep;
             fflush(stdout);
