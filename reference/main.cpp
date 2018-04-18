@@ -21,6 +21,11 @@ freely, subject to the following restrictions:
    distribution.
 
 Source for this code: https://github.com/tunabrain/incremental-fluids
+
+This code also includes timing routines, from https://github.com/BU-EC-HPC-S16/
+EC500-High-Performance-Computing/blob/master/ReferenceCode/n01TimingOpenMP/timi
+ng_vector_mpi.cpp
+
 */
 
 #define _USE_MATH_DEFINES
@@ -31,6 +36,7 @@ Source for this code: https://github.com/tunabrain/incremental-fluids
 #include <vector>
 #include <math.h>
 #include <stack>
+#include <chrono>
 
 #include "./lodepng/lodepng.h"
 
@@ -84,8 +90,15 @@ int main(int argc, char * argv[]) {
 
     double time = 0.0;
     int iterations = 0;
+
+    chrono::duration<double> difference_in_time;
+   
     
     while (time < 2.0) {
+
+    	// Start time
+        chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
         for (int i = 0; i < 4; i++) {
             // solver->addInflow(0.45, 0.2, 0.15, 0.03, 1.0, 0.0, 3.0);
             solver->addInflow(x, y, w, h, d, u, v);
@@ -93,7 +106,14 @@ int main(int argc, char * argv[]) {
             time += timestep;
             fflush(stdout);
         }
+
+        // End time
+        chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
         
+        // Add to total
+        difference_in_time += end_time - begin_time;
+
+        // Render image
         solver->toImage(image);
         
         char path[256];
@@ -103,6 +123,9 @@ int main(int argc, char * argv[]) {
         for (unsigned i = 0; i < bodies.size(); i++)
             bodies[i]->update(timestep);
     }
+
+    // Print timing result
+    printf("Total time: %.10f seconds.\n", difference_in_time.count());
 
     return 0;
 }
