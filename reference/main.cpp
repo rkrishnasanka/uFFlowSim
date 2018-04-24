@@ -39,6 +39,7 @@ ng_vector_mpi.cpp
 #include <chrono>
 
 #include "./lodepng/lodepng.h"
+#include "csv.h"
 
 #include "Functions.h"
 #include "SolidBody.h"
@@ -49,44 +50,72 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
     /* Play with these constants, if you want */
-    const int sizeX = 128;
-    const int sizeY = 128;
+    int sizeX = 128;
+    int sizeY = 128;
     
-    const double density = 0.1;
-    const double timestep = 0.005;
+    double density = 0.1;
+    double timestep = 0.005;
     
     unsigned char *image = new unsigned char[sizeX*sizeY*4];
 
+    vector<SolidBody *> bodies;
+    double x, y, w, h, d, u, v, t;
+    double posX, posY, scaleX, scaleY, theta, velX, velY, velTheta;
+    string cmd;
 
-    double x, y, w, h, d, u, v;
-    if (argc > 1) {
-        x = atof(argv[1]);
-        y = atof(argv[2]);
-        w = atof(argv[3]);
-        h = atof(argv[4]);
-        d = atof(argv[5]);
-        u = atof(argv[6]);
-        v = atof(argv[7]);
-    } else {
-        x = 0.0;
-        y = 0.0;
-        w = 1.0;
-        h = 1.0;
+    // Accepts file from command line with parameters
+    if (argc > 1) { 
+        io::CSVReader<9> in(argv[1]);
+
+        while (in.read_row(cmd, posX, posY, scaleX, scaleY, theta, velX, velY, velTheta)) {
+            // Specifies fluid parameters
+            if (cmd == "fluid") {
+                x = posX;
+                y = posY;
+                w = scaleX;
+                h = scaleY;
+                d = theta;
+                u = velX;
+                v = velY;
+                t = velTheta;
+            } 
+            // Specifies matrix properties
+            else if (cmd == "matrix") {
+                sizeX = (int)posX;
+                sizeY = (int)posY;
+                density = scaleX;
+                timestep = scaleY;
+            }
+            // Adds sphere object to grid
+            else if (cmd == "circle") {
+                bodies.push_back(new SolidSphere(posX, posY, scaleX, scaleY, M_PI*theta, velX, velY, velTheta));
+            } 
+            // Adds box object to grid
+            else if (cmd == "box") {
+                bodies.push_back(new SolidBox(posX, posY, scaleX, scaleY, M_PI*theta, velX, velY, velTheta));                
+            } 
+            else {
+                printf("Invalid command; ignoring line.\n");
+            }
+        }
+    } else { // Default cases for debugging 
+        x = 0.45;
+        y = 0.20;
+        w = 0.15;
+        h = 0.03;
         d = 1.0;
         u = 0.0;
-        v = 2.0;
-    }
+        v = 3.0;
 
-    
-    vector<SolidBody *> bodies;
-    bodies.push_back(new SolidSphere(0.6, 0.7, 0.4, 0.1, M_PI*0.25, 0.0, 0.0, 0.0));
-    bodies.push_back(new SolidSphere(0.1, 0.2, 0.1, 0.1, M_PI*0.1, 0.0, 0.0, 0.0));
+        bodies.push_back(new SolidSphere(0.6, 0.7, 0.4, 0.1, M_PI*0.25, 0.0, 0.0, 0.0));
+        bodies.push_back(new SolidSphere(0.1, 0.2, 0.1, 0.1, M_PI*0.1, 0.0, 0.0, 0.0));
+    }
     
     vector<const SolidBody *> cBodies;
     for (unsigned i = 0; i < bodies.size(); i++)
         cBodies.push_back(bodies[i]);
 
-    FluidSolver *solver = new FluidSolver(sizeX, sizeY, density, cBodies);
+    FluidSolver * solver = new FluidSolver(sizeX, sizeY, density, cBodies);
 
     double time = 0.0;
     int iterations = 0;
@@ -94,13 +123,13 @@ int main(int argc, char * argv[]) {
     chrono::duration<double> difference_in_time;
    
     
-    while (time < 2.0) {
+    while (time < t) {
 
     	// Start time
         chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+        // Main iteration loop
         for (int i = 0; i < 4; i++) {
-            // solver->addInflow(0.45, 0.2, 0.15, 0.03, 1.0, 0.0, 3.0);
             solver->addInflow(x, y, w, h, d, u, v);
             solver->update(timestep);
             time += timestep;
@@ -127,5 +156,6 @@ int main(int argc, char * argv[]) {
     // Print timing result
     printf("Total time: %.10f seconds.\n", difference_in_time.count());
 
+    // Terminate
     return 0;
 }

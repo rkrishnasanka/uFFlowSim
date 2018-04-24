@@ -7,6 +7,6 @@ D=0.1 # Quantity of fluid coming from source
 U=0.0 # X direction of flow magnitude
 V=3.0 # Y direction of flow magnitude
 
-./curved-boundaries $X $Y $W $H $D $U $V
+./curved-boundaries test.csv
 sh MakeGIF.sh
 echo "Done."
