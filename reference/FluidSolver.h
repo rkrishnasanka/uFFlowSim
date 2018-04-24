@@ -85,6 +85,7 @@ public:
     
     void update(double timestep);
     void addInflow(double x, double y, double w, double h, double d, double u, double v);
+    void addOutflow(double x, double y, double w, double h, double d, double u, double v);
     void toImage(unsigned char *rgba);
 };
 

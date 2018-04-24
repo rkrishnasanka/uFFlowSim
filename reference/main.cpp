@@ -131,7 +131,11 @@ int main(int argc, char * argv[]) {
         // Main iteration loop
         for (int i = 0; i < 4; i++) {
             solver->addInflow(x, y, w, h, d, u, v);
+            //solver->update(timestep);
+
+            solver->addOutflow(x, y+2.0, w, h, d, u, -1.0*v);
             solver->update(timestep);
+
             time += timestep;
             fflush(stdout);
         }

@@ -273,6 +273,12 @@ void FluidSolver::addInflow(double x, double y, double w, double h, double d, do
     _v->addInflow(x, y, x + w, y + h, v);
 }
 
+void FluidSolver::addOutflow(double x, double y, double w, double h, double d, double u, double v) {
+    _d->addOutflow(x, y, x + w, y + h, d);
+    _u->addOutflow(x, y, x + w, y + h, u);
+    _v->addOutflow(x, y, x + w, y + h, v);
+}
+
 void FluidSolver::toImage(unsigned char *rgba) {
     for (int i = 0; i < _w*_h; i++) {
         /* Use fluid volume for nice anti aliasing */

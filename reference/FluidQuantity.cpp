@@ -153,6 +153,25 @@ void FluidQuantity::addInflow(double x0, double y0, double x1, double y1, double
     }
 }
 
+void FluidQuantity::addOutflow(double x0, double y0, double x1, double y1, double v) {
+    int ix0 = (int)(x0/_hx - _ox);
+    int iy0 = (int)(y0/_hx - _oy);
+    int ix1 = (int)(x1/_hx - _ox);
+    int iy1 = (int)(y1/_hx - _oy);
+    
+    for (int y = max(iy0, 0); y < min(iy1, _h); y++) {
+        for (int x = max(ix0, 0); x < min(ix1, _h); x++) {
+            double l = length(
+                (2.0*(x + 0.5)*_hx - (x0 + x1))/(x1 - x0),
+                (2.0*(y + 0.5)*_hx - (y0 + y1))/(y1 - y0)
+            );
+            double vi = cubicPulse(l)*v;
+            if (fabs(_src[x + y*_w]) > fabs(vi))
+                _src[x + y*_w] = vi;
+        }
+    }
+}
+
 void FluidQuantity::fillSolidFields(const vector<const SolidBody *> &bodies) {
     if (bodies.empty())
         return;

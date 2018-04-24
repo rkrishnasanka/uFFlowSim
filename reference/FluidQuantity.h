@@ -96,6 +96,7 @@ public:
     void advect(double timestep, const FluidQuantity &u, const FluidQuantity &v,
             const vector<const SolidBody *> &bodies);
     void addInflow(double x0, double y0, double x1, double y1, double v);
+    void addOutflow(double x0, double y0, double x1, double y1, double v);
     void fillSolidFields(const vector<const SolidBody *> &bodies);
     void fillSolidMask();
     double extrapolateNormal(int idx);
