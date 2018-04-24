@@ -59,7 +59,9 @@ int main(int argc, char * argv[]) {
     unsigned char *image = new unsigned char[sizeX*sizeY*4];
 
     vector<SolidBody *> bodies;
-    double x, y, w, h, d, u, v, t;
+    double t;
+    double xIn, yIn, wIn, hIn, dIn, uIn, vIn;
+    double xOut, yOut, wOut, hOut, dOut, uOut, vOut;
     double posX, posY, scaleX, scaleY, theta, velX, velY, velTheta;
     string cmd;
 
@@ -68,16 +70,25 @@ int main(int argc, char * argv[]) {
         io::CSVReader<9> in(argv[1]);
 
         while (in.read_row(cmd, posX, posY, scaleX, scaleY, theta, velX, velY, velTheta)) {
-            // Specifies fluid parameters
-            if (cmd == "fluid") {
-                x = posX;
-                y = posY;
-                w = scaleX;
-                h = scaleY;
-                d = theta;
-                u = velX;
-                v = velY;
-                t = velTheta;
+            // Specifies source parameters
+            if (cmd == "inflow") {
+                xIn = posX;
+                yIn = posY;
+                wIn = scaleX;
+                hIn = scaleY;
+                dIn = theta;
+                uIn = velX;
+                vIn = velY;
+            } 
+            // Specifies sink parameters
+            else if (cmd == "outflow") {
+                xOut = posX;
+                yOut = posY;
+                wOut = scaleX;
+                hOut = scaleY;
+                dOut = theta;
+                uOut = velX;
+                vOut = velY;
             } 
             // Specifies matrix properties
             else if (cmd == "matrix") {
@@ -85,6 +96,7 @@ int main(int argc, char * argv[]) {
                 sizeY = (int)posY;
                 density = scaleX;
                 timestep = scaleY;
+                t = theta;
             }
             // Adds sphere object to grid
             else if (cmd == "circle") {
@@ -99,13 +111,13 @@ int main(int argc, char * argv[]) {
             }
         }
     } else { // Default cases for debugging 
-        x = 0.45;
-        y = 0.20;
-        w = 0.15;
-        h = 0.03;
-        d = 1.0;
-        u = 0.0;
-        v = 3.0;
+        xIn = 0.45;
+        yIn = 0.20;
+        wIn = 0.15;
+        hIn = 0.03;
+        dIn = 1.0;
+        uIn = 0.0;
+        vIn = 3.0;
 
         bodies.push_back(new SolidSphere(0.6, 0.7, 0.4, 0.1, M_PI*0.25, 0.0, 0.0, 0.0));
         bodies.push_back(new SolidSphere(0.1, 0.2, 0.1, 0.1, M_PI*0.1, 0.0, 0.0, 0.0));
@@ -130,10 +142,9 @@ int main(int argc, char * argv[]) {
 
         // Main iteration loop
         for (int i = 0; i < 4; i++) {
-            solver->addInflow(x, y, w, h, d, u, v);
-            //solver->update(timestep);
+            solver->addInflow(xIn, yIn, wIn, hIn, dIn, uIn, vIn);
+            solver->addOutflow(xOut, yOut, wOut, hOut, dOut, uOut, vOut);
 
-            solver->addOutflow(x, y+2.0, w, h, d, u, -1.0*v);
             solver->update(timestep);
 
             time += timestep;
