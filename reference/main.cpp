@@ -142,6 +142,7 @@ int main(int argc, char * argv[]) {
 
         // Main iteration loop
         for (int i = 0; i < 4; i++) {
+            //SETTING THE SOURCE AND SINKS
             solver->addInflow(xIn, yIn, wIn, hIn, dIn, uIn, vIn);
             solver->addOutflow(xOut, yOut, wOut, hOut, dOut, uOut, vOut);
 

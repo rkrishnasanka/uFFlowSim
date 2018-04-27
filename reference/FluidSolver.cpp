@@ -17,6 +17,7 @@ void FluidSolver::buildRhs() {
                 if (_bodies.empty())
                     continue;
                 
+                //Modifiers for a moving body
                 if (x > 0)
                     _r[idx] -= (_u->volume(x, y) - vol)*_bodies[body[idx -  1]]->velocityX(x*_hx, (y + 0.5)*_hx);
                 if (y > 0)
@@ -26,6 +27,7 @@ void FluidSolver::buildRhs() {
                 if (y < _h - 1)
                     _r[idx] += (_v->volume(x, y + 1) - vol)*_bodies[body[idx + _w]]->velocityY((x + 0.5)*_hx, (y + 1.0)*_hx);
             } else
+                //If its a solid body , the index is zero
                 _r[idx] = 0.0;
         }
     }
@@ -220,6 +222,10 @@ void FluidSolver::setBoundaryCondition() {
     const uint8_t *cell = _d->cell();
     const uint8_t *body = _d->body();
     
+    /**
+     * @brief This sets the boundary conditions for each of the solid objects
+     * 
+     */
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] == CELL_SOLID) {
@@ -227,23 +233,36 @@ void FluidSolver::setBoundaryCondition() {
                 
                 _u->at(x, y) = b.velocityX(x*_hx, (y + 0.5)*_hx);
                 _v->at(x, y) = b.velocityY((x + 0.5)*_hx, y*_hx);
+
+                //This +1 index is also set because of the marker and cell
                 _u->at(x + 1, y) = b.velocityX((x + 1.0)*_hx, (y + 0.5)*_hx);
                 _v->at(x, y + 1) = b.velocityY((x + 0.5)*_hx, (y + 1.0)*_hx);
             }
         }
     }
     
+    /**
+     * @brief This sets the boundary conditions for the edges of the simulation canvas
+     * 
+     */
     for (int y = 0; y < _h; y++)
         _u->at(0, y) = _u->at(_w, y) = 0.0;
     for (int x = 0; x < _w; x++)
         _v->at(x, 0) = _v->at(x, _h) = 0.0;
 }
 
+/**
+ * @brief Updates the flow over time, we run this when we need to progress the simulation over time
+ * 
+ * @param timestep Number of milliseconds we want to push the time step
+ */
 void FluidSolver::update(double timestep) {
+    // It updates _phi matrix in the fluid quantity and also marks the cell to be solid
     _d->fillSolidFields(_bodies);
     _u->fillSolidFields(_bodies);
     _v->fillSolidFields(_bodies);
     
+    //Sets the bounding box and solid object velocity profiles
     setBoundaryCondition();
     
     buildRhs();
@@ -267,7 +286,19 @@ void FluidSolver::update(double timestep) {
     _v->flip();
 }
 
+/**
+ * @brief Add an input flow for the device
+ * 
+ * @param x X coordinate of the inlet
+ * @param y Y coordinate of the inlet
+ * @param w Width of the inlet
+ * @param h Height of the inlet
+ * @param d Density of the inlet fluid ???
+ * @param u X component of the inlet fluid velocity vector
+ * @param v Y component of the inlet fluid velocity vector
+ */
 void FluidSolver::addInflow(double x, double y, double w, double h, double d, double u, double v) {
+    //RUN addInFlow FOR EACH OF THE MARKER AND CELL MATRICES
     _d->addInflow(x, y, x + w, y + h, d);
     _u->addInflow(x, y, x + w, y + h, u);
     _v->addInflow(x, y, x + w, y + h, v);

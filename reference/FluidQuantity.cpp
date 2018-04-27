@@ -135,17 +135,26 @@ void FluidQuantity::advect(double timestep, const FluidQuantity &u, const FluidQ
 }
 
 void FluidQuantity::addInflow(double x0, double y0, double x1, double y1, double v) {
+    /*
+    Figure out indices of the matrix where the inlet conditions will be placed
+    */
     int ix0 = (int)(x0/_hx - _ox);
     int iy0 = (int)(y0/_hx - _oy);
     int ix1 = (int)(x1/_hx - _ox);
     int iy1 = (int)(y1/_hx - _oy);
     
+    //Span though the idices and change the source matrix values
     for (int y = max(iy0, 0); y < min(iy1, _h); y++) {
         for (int x = max(ix0, 0); x < min(ix1, _h); x++) {
+
+            //We calculate the length function to use in the cubic pulse
+            //Length = sqrt(x^2 + y^2)
             double l = length(
                 (2.0*(x + 0.5)*_hx - (x0 + x1))/(x1 - x0),
                 (2.0*(y + 0.5)*_hx - (y0 + y1))/(y1 - y0)
             );
+
+            //We use the length calculated above on the pulse here
             double vi = cubicPulse(l)*v;
             if (fabs(_src[x + y*_w]) < fabs(vi))
                 _src[x + y*_w] = vi;

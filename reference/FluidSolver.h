@@ -50,8 +50,18 @@ class FluidSolver {
     void setBoundaryCondition();
     
 public:
+    /**
+     * @brief Construct a new Fluid Solver object
+     * 
+     * @param w Width of the simulation area
+     * @param h Height of the simulation area
+     * @param density Density of the fluid
+     * @param bodies List of solid bodies
+     */
     FluidSolver(int w, int h, double density, const vector<const SolidBody *> &bodies)
                 : _w(w), _h(h), _density(density), _bodies(bodies) {
+        
+        //From what it seems, this is the grid density 
         _hx = 1.0/min(w, h);
         
         _d = new FluidQuantity(_w,     _h,     0.5, 0.5, _hx);
