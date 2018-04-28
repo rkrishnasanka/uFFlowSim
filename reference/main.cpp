@@ -140,6 +140,7 @@ int main(int argc, char * argv[]) {
     	// Start time
         chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+
         // Main iteration loop
         for (int i = 0; i < 4; i++) {
             //SETTING THE SOURCE AND SINKS
