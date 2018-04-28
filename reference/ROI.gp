@@ -1,4 +1,4 @@
-set xlabel 'Candidate Functions'
+set xlabel 'Candidate Functions' offset 0, 4
 set ylabel 'Percentage of Runtime'
 set title 'ROI Analysis'
 set boxwidth 0.2
