@@ -14,6 +14,7 @@ void FluidSolver::buildRhs() {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
+    #pragma omp parallel for
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
 
@@ -77,6 +78,7 @@ void FluidSolver::buildPressureMatrix(double timestep) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -122,6 +124,7 @@ void FluidSolver::buildPreconditioner() {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -175,6 +178,7 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -196,6 +200,7 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
 
     // We take t again from from the previous loop where we modified 
     // dst to accumulate the result onto it
+    #pragma omp parallel for
     for (int y = _h - 1, idx = _w*_h - 1; y >= 0; y--) {
         for (int x = _w - 1; x >= 0; x--, idx--) {
             if (cell[idx] != CELL_FLUID)
@@ -255,6 +260,7 @@ void FluidSolver::matrixVectorProduct(double *dst, double *b) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             double t = _aDiag[idx]*b[idx];
@@ -291,6 +297,7 @@ void FluidSolver::scaledAdd(double *dst, double *a, double *b, double s) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int i = 0; i < _w*_h; i++)
         dst[i] = a[i] + b[i]*s;
 
@@ -314,6 +321,7 @@ double FluidSolver::infinityNorm(double *a) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int i = 0; i < _w*_h; i++)
         maxA = max(maxA, fabs(a[i]));
 
@@ -375,6 +383,7 @@ void FluidSolver::applyPressure(double timestep) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -413,6 +422,7 @@ void FluidSolver::setBoundaryCondition() {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
+    #pragma omp parallel for
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] == CELL_SOLID) {
@@ -432,8 +442,11 @@ void FluidSolver::setBoundaryCondition() {
      * @brief This sets the boundary conditions for the edges of the simulation canvas
      * 
      */
+    #pragma omp parallel for
     for (int y = 0; y < _h; y++)
         _u->at(0, y) = _u->at(_w, y) = 0.0;
+
+    #pragma omp parallel for
     for (int x = 0; x < _w; x++)
         _v->at(x, 0) = _v->at(x, _h) = 0.0;
 
