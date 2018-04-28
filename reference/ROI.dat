@@ -1,18 +1,10 @@
 # Total time: 95.9248774370 seconds.
 # Candidate times:
-1.315562             candidate_buildRHS_time
-0.262861             candidate_buildPressureMatrix_time
-0.673879             candidate_buildPreconditioner_time
-34.870554            candidate_applyPreconditioner_time
-4.984758             candidate_dotProduct_time
-10.939922            candidate_matrixVectorProduct_time
-5.806564             candidate_scaleAdd_time
-2.466773             candidate_infinityNorm_time
-0.349945             candidate_applyPressure_time
-0.095668             candidate_setBoundaryCondition_time
-17.219860            candidate_advect_time
-0.027324             candidate_addInFlow_time
-16.342343            candidate_fillSolidFields_time
-0.175178             candidate_extrapolate_time
-0.135444             candidate_fillSolidMask_time
-95.666634            total
+1 1.315562             buildRHS
+2 34.870554            applyPreconditioner
+3 4.984758             dotProduct
+4 10.939922            matrixVectorProduct
+5 5.806564             scaleAdd
+6 2.466773             infinityNorm
+7 17.219860            advect
+8 16.342343            fillSolidFields
