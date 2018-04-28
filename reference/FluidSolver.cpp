@@ -1,5 +1,11 @@
 #include "FluidSolver.h"
 
+/**
+ * @brief Builds the RHS of the system, what is the RHS ? We shall answer soon
+ * 
+ * We update the _r matrix in 
+ * 
+ */
 void FluidSolver::buildRhs() {
     double scale = 1.0/_hx;
     const uint8_t *cell = _d->cell();
@@ -17,7 +23,7 @@ void FluidSolver::buildRhs() {
                 if (_bodies.empty())
                     continue;
                 
-                //Modifiers for a moving body
+                //Modifiers for a moving body - WE DONT USE THIS RIGHT NOW
                 if (x > 0)
                     _r[idx] -= (_u->volume(x, y) - vol)*_bodies[body[idx -  1]]->velocityX(x*_hx, (y + 0.5)*_hx);
                 if (y > 0)
@@ -33,11 +39,21 @@ void FluidSolver::buildRhs() {
     }
 }
 
-/* Entries of the pressure matrix are modified accordingly */
+/**
+ * @brief Builds the pressure matrix that progpagates the pressures from the 
+ * current timestep
+ * 
+ * @param timestep Used to calculate the scaling factor for the propagation
+ */
 void FluidSolver::buildPressureMatrix(double timestep) {
+    /* 
+        Could this be dynamic pressure ????
+        https://en.wikipedia.org/wiki/Dynamic_pressure
+    */
     double scale = timestep/(_density*_hx*_hx);
     const uint8_t *cell = _d->cell();
     
+    //TODO: Optimize this to not keep resetting every single time
     memset(_aDiag,  0, _w*_h*sizeof(double));
     memset(_aPlusX, 0, _w*_h*sizeof(double));
     memset(_aPlusY, 0, _w*_h*sizeof(double));
@@ -47,6 +63,10 @@ void FluidSolver::buildPressureMatrix(double timestep) {
             if (cell[idx] != CELL_FLUID)
                 continue;
             
+            //The factor we modify is just the scaled version of volume 
+            //from the adjacent cell
+
+            //Note : we can parallellize the _aPlus? modifications
             if (x < _w - 1 && cell[idx + 1] == CELL_FLUID) {
                 double factor = scale*_u->volume(x + 1, y);
                 _aDiag [idx    ] +=  factor;
@@ -97,6 +117,13 @@ void FluidSolver::buildPreconditioner() {
 void FluidSolver::applyPreconditioner(double *dst, double *a) {
     const uint8_t *cell = _d->cell();
     
+    //Note: This is also a candidate for parallelization
+
+    /**
+     * @brief This entire chunk of code accumulates the and caluclates the 
+     * updated dentination matrix from the preconditioned matrix (_precon) 
+     * and the updated x, y pressure matrices (aPlusX , aPlusY)
+     */
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -104,8 +131,11 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
             
             double t = a[idx];
 
+            //If not boundary or solid body
             if (x > 0 && cell[idx -  1] == CELL_FLUID)
                 t -= _aPlusX[idx -  1]*_precon[idx -  1]*dst[idx -  1];
+
+            //If not boundary or solid body
             if (y > 0 && cell[idx - _w] == CELL_FLUID)
                 t -= _aPlusY[idx - _w]*_precon[idx - _w]*dst[idx - _w];
 
@@ -113,6 +143,8 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
         }
     }
 
+    // We take t again from from the previous loop where we modified 
+    // dst to accumulate the result onto it
     for (int y = _h - 1, idx = _w*_h - 1; y >= 0; y--) {
         for (int x = _w - 1; x >= 0; x--, idx--) {
             if (cell[idx] != CELL_FLUID)
@@ -132,6 +164,7 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
 
 double FluidSolver::dotProduct(double *a, double *b) {
     double result = 0.0;
+    //Note: Can be parallelized
     for (int i = 0; i < _w*_h; i++)
         result += a[i]*b[i];
     return result;
@@ -157,12 +190,14 @@ void FluidSolver::matrixVectorProduct(double *dst, double *b) {
 }
 
 void FluidSolver::scaledAdd(double *dst, double *a, double *b, double s) {
+    //Note: Can be ||
     for (int i = 0; i < _w*_h; i++)
         dst[i] = a[i] + b[i]*s;
 }
 
 double FluidSolver::infinityNorm(double *a) {
     double maxA = 0.0;
+    //Note: can be ||
     for (int i = 0; i < _w*_h; i++)
         maxA = max(maxA, fabs(a[i]));
     return maxA;
@@ -185,6 +220,7 @@ void FluidSolver::project(int limit) {
         scaledAdd(_p, _p, _s, alpha);
         scaledAdd(_r, _r, _z, -alpha);
         
+        //Note: Potential || candidate
         maxError = infinityNorm(_r);
         if (maxError < 1e-5) {
             printf("Exiting solver after %d iterations, maximum error is %f\n", iter, maxError);
@@ -205,6 +241,7 @@ void FluidSolver::applyPressure(double timestep) {
     double scale = timestep/(_density*_hx);
     const uint8_t *cell = _d->cell();
     
+    //Note: Can be ||
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -226,6 +263,7 @@ void FluidSolver::setBoundaryCondition() {
      * @brief This sets the boundary conditions for each of the solid objects
      * 
      */
+    //Note: can be ||
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] == CELL_SOLID) {
@@ -267,8 +305,13 @@ void FluidSolver::update(double timestep) {
     
     buildRhs();
     buildPressureMatrix(timestep);
+
+    //Note: the preconditioner is meant for doing the conjugate gradient
     buildPreconditioner();
+
+    //Note: This is where the conjugate gradient is happening !!!!
     project(2000);
+
     applyPressure(timestep);
     
     _d->extrapolate();
@@ -281,6 +324,7 @@ void FluidSolver::update(double timestep) {
     _u->advect(timestep, *_u, *_v, _bodies);
     _v->advect(timestep, *_u, *_v, _bodies);
     
+    //Swap all the sources and destinations
     _d->flip();
     _u->flip();
     _v->flip();
