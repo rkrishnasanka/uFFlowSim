@@ -1,7 +1,10 @@
 #ifndef FLUIDSOLVER_H
 #define FLUIDSOLVER_H
 
+#define PRINT_CANDIDATES 0
+
 #include <vector>
+#include <chrono>
 
 #include "Functions.h"
 #include "SolidBody.h"
@@ -10,6 +13,7 @@
 using namespace std;
 
 class FluidSolver {
+public:
     FluidQuantity *_d;
     FluidQuantity *_u;
     FluidQuantity *_v;
@@ -31,6 +35,17 @@ class FluidSolver {
     double *_aPlusY;
     
     const vector<const SolidBody *> &_bodies;
+
+    chrono::duration<double> candidate_buildRHS_time;
+    chrono::duration<double> candidate_buildPressureMatrix_time;
+    chrono::duration<double> candidate_buildPreconditioner_time;
+    chrono::duration<double> candidate_applyPreconditioner_time;
+    chrono::duration<double> candidate_dotProduct_time;
+    chrono::duration<double> candidate_matrixVectorProduct_time;
+    chrono::duration<double> candidate_scaleAdd_time;
+    chrono::duration<double> candidate_infinityNorm_time;
+    chrono::duration<double> candidate_applyPressure_time;
+    chrono::duration<double> candidate_setBoundaryCondition_time;
     
     /* We now modify the right hand side to "blend" between solid and fluid
      * velocity based on the cell volume occupied by fluid.
@@ -49,7 +64,6 @@ class FluidSolver {
     void applyPressure(double timestep);
     void setBoundaryCondition();
     
-public:
     /**
      * @brief Construct a new Fluid Solver object
      * 

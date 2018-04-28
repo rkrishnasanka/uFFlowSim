@@ -2,10 +2,12 @@
 #define FLUIDQUANTITY_H
 
 #define _USE_MATH_DEFINES
+#define PRINT_CANDIDATES 0
 
 #include <stack>
 #include <vector>
 #include <algorithm>
+#include <chrono>
 #include <stdint.h>
 #include <math.h>
 
@@ -16,6 +18,7 @@ using namespace std;
 
 class FluidQuantity
 {
+public:
     double *_src;
     double *_dst;
 
@@ -42,11 +45,17 @@ class FluidQuantity
     double _oy;
     double _hx;
 
+    chrono::duration<double> candidate_advect_time;
+    chrono::duration<double> candidate_addInFlow_time;
+    chrono::duration<double> candidate_fillSolidFields_time;
+    chrono::duration<double> candidate_extrapolate_time;
+    chrono::duration<double> candidate_fillSolidMask_time;
+
     double lerp(double a, double b, double x) const;
     double cerp(double a, double b, double c, double d, double x) const;
     void rungeKutta3(double &x, double &y, double timestep, const FluidQuantity &u, const FluidQuantity &v) const;
 
-  public:
+  
     /**
  * @brief Construct a new Fluid Quantity object
  * 

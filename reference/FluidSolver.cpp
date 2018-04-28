@@ -10,9 +10,13 @@ void FluidSolver::buildRhs() {
     double scale = 1.0/_hx;
     const uint8_t *cell = _d->cell();
     const uint8_t *body = _d->body();
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
+
             if (cell[idx] == CELL_FLUID) {
                 _r[idx] = -scale*
                     (_u->volume(x + 1, y)*_u->at(x + 1, y) - _u->volume(x, y)*_u->at(x, y) +
@@ -37,6 +41,18 @@ void FluidSolver::buildRhs() {
                 _r[idx] = 0.0;
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate buildRHS time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_buildRHS_time += difference_in_time;
 }
 
 /**
@@ -57,6 +73,9 @@ void FluidSolver::buildPressureMatrix(double timestep) {
     memset(_aDiag,  0, _w*_h*sizeof(double));
     memset(_aPlusX, 0, _w*_h*sizeof(double));
     memset(_aPlusY, 0, _w*_h*sizeof(double));
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
@@ -81,12 +100,27 @@ void FluidSolver::buildPressureMatrix(double timestep) {
             }
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate buildPressureMatrix time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_buildPressureMatrix_time += difference_in_time;
 }
 
 void FluidSolver::buildPreconditioner() {
     const double tau = 0.97;
     const double sigma = 0.25;
     const uint8_t *cell = _d->cell();
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
@@ -112,6 +146,19 @@ void FluidSolver::buildPreconditioner() {
             _precon[idx] = 1.0/sqrt(e);
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate buildPreconditioner time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_buildPreconditioner_time += difference_in_time;
+
 }
 
 void FluidSolver::applyPreconditioner(double *dst, double *a) {
@@ -124,6 +171,10 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
      * updated dentination matrix from the preconditioned matrix (_precon) 
      * and the updated x, y pressure matrices (aPlusX , aPlusY)
      */
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -160,17 +211,50 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
             dst[idx] = t*_precon[idx];
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate applyPreconditioner time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_applyPreconditioner_time += difference_in_time;
 }
 
 double FluidSolver::dotProduct(double *a, double *b) {
     double result = 0.0;
     //Note: Can be parallelized
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int i = 0; i < _w*_h; i++)
         result += a[i]*b[i];
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate dotProduct time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_dotProduct_time += difference_in_time;
+
     return result;
 }
 
 void FluidSolver::matrixVectorProduct(double *dst, double *b) {
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             double t = _aDiag[idx]*b[idx];
@@ -187,19 +271,64 @@ void FluidSolver::matrixVectorProduct(double *dst, double *b) {
             dst[idx] = t;
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate matrixVectorProduct time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_matrixVectorProduct_time += difference_in_time;
 }
 
 void FluidSolver::scaledAdd(double *dst, double *a, double *b, double s) {
     //Note: Can be ||
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int i = 0; i < _w*_h; i++)
         dst[i] = a[i] + b[i]*s;
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate scaleAdd time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_scaleAdd_time += difference_in_time;
 }
 
 double FluidSolver::infinityNorm(double *a) {
     double maxA = 0.0;
     //Note: can be ||
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int i = 0; i < _w*_h; i++)
         maxA = max(maxA, fabs(a[i]));
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate infinityNorm time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_infinityNorm_time += difference_in_time;
+
     return maxA;
 }
 
@@ -234,7 +363,7 @@ void FluidSolver::project(int limit) {
         sigma = sigmaNew;
     }
     
-    printf("Exceeded budget of %d iterations, maximum error was %f\n", limit, maxError);
+    if (PRINT_CANDIDATES) printf("Exceeded budget of %d iterations, maximum error was %f\n", limit, maxError);
 }
 
 void FluidSolver::applyPressure(double timestep) {
@@ -242,6 +371,10 @@ void FluidSolver::applyPressure(double timestep) {
     const uint8_t *cell = _d->cell();
     
     //Note: Can be ||
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] != CELL_FLUID)
@@ -253,6 +386,18 @@ void FluidSolver::applyPressure(double timestep) {
             _v->at(x,     y + 1) += scale*_p[idx];
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate applyPressure time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_applyPressure_time += difference_in_time;
 }
 
 void FluidSolver::setBoundaryCondition() {
@@ -264,6 +409,10 @@ void FluidSolver::setBoundaryCondition() {
      * 
      */
     //Note: can be ||
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
             if (cell[idx] == CELL_SOLID) {
@@ -287,6 +436,18 @@ void FluidSolver::setBoundaryCondition() {
         _u->at(0, y) = _u->at(_w, y) = 0.0;
     for (int x = 0; x < _w; x++)
         _v->at(x, 0) = _v->at(x, _h) = 0.0;
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate setBoundaryCondition time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_setBoundaryCondition_time += difference_in_time;
 }
 
 /**

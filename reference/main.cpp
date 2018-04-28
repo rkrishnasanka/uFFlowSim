@@ -56,7 +56,7 @@ int main(int argc, char * argv[]) {
     double density = 0.1;
     double timestep = 0.005;
     
-    unsigned char *image = new unsigned char[sizeX*sizeY*4];
+    unsigned char * image = new unsigned char[sizeX*sizeY*4];
 
     vector<SolidBody *> bodies;
     double t;
@@ -161,7 +161,6 @@ int main(int argc, char * argv[]) {
 
         // Render image
         solver->toImage(image);
-        
         char path[256];
         sprintf(path, "Frame%05d.png", iterations++);
         lodepng_encode32_file(path, image, sizeX, sizeY);
@@ -170,8 +169,86 @@ int main(int argc, char * argv[]) {
             bodies[i]->update(timestep);
     }
 
-    // Print timing result
+    // Print timing results
     printf("Total time: %.10f seconds.\n", difference_in_time.count());
+
+    // Print candidate results
+    printf("Candidate times:\n");
+
+    printf("%-20f candidate_buildRHS_time\n", solver->candidate_buildRHS_time.count());
+    printf("%-20f candidate_buildPressureMatrix_time\n", solver->candidate_buildPressureMatrix_time.count());
+    printf("%-20f candidate_buildPreconditioner_time\n", solver->candidate_buildPreconditioner_time.count());
+    printf("%-20f candidate_applyPreconditioner_time\n", solver->candidate_applyPreconditioner_time.count());
+    printf("%-20f candidate_dotProduct_time\n", solver->candidate_dotProduct_time.count());
+    printf("%-20f candidate_matrixVectorProduct_time\n", solver->candidate_matrixVectorProduct_time.count());
+    printf("%-20f candidate_scaleAdd_time\n", solver->candidate_scaleAdd_time.count());
+    printf("%-20f candidate_infinityNorm_time\n", solver->candidate_infinityNorm_time.count());
+    printf("%-20f candidate_applyPressure_time\n", solver->candidate_applyPressure_time.count());
+    printf("%-20f candidate_setBoundaryCondition_time\n", solver->candidate_setBoundaryCondition_time.count());
+
+    printf("%-20f candidate_advect_time\n", (
+        solver->_d->candidate_advect_time.count() + 
+        solver->_u->candidate_advect_time.count() + 
+        solver->_v->candidate_advect_time.count() 
+        )
+    );
+
+    printf("%-20f candidate_addInFlow_time\n", (
+        solver->_d->candidate_addInFlow_time.count() + 
+        solver->_u->candidate_addInFlow_time.count() + 
+        solver->_v->candidate_addInFlow_time.count()
+        )
+    );
+
+    printf("%-20f candidate_fillSolidFields_time\n", (
+        solver->_d->candidate_fillSolidFields_time.count() + 
+        solver->_u->candidate_fillSolidFields_time.count() + 
+        solver->_v->candidate_fillSolidFields_time.count()
+        )
+    );
+
+    printf("%-20f candidate_extrapolate_time\n", (
+        solver->_d->candidate_extrapolate_time.count() + 
+        solver->_u->candidate_extrapolate_time.count() + 
+        solver->_v->candidate_extrapolate_time.count()
+        )
+    );
+
+    printf("%-20f candidate_fillSolidMask_time\n", (
+        solver->_d->candidate_fillSolidMask_time.count() + 
+        solver->_u->candidate_fillSolidMask_time.count() + 
+        solver->_v->candidate_fillSolidMask_time.count()
+        )
+    );
+
+    printf("%-20f total\n", (
+        solver->candidate_buildRHS_time.count() +
+        solver->candidate_buildPressureMatrix_time.count() +
+        solver->candidate_buildPreconditioner_time.count() +
+        solver->candidate_applyPreconditioner_time.count() +
+        solver->candidate_dotProduct_time.count() +
+        solver->candidate_matrixVectorProduct_time.count() +
+        solver->candidate_scaleAdd_time.count() +
+        solver->candidate_infinityNorm_time.count() +
+        solver->candidate_applyPressure_time.count() +
+        solver->candidate_setBoundaryCondition_time.count() +
+        solver->_d->candidate_advect_time.count() +
+        solver->_d->candidate_addInFlow_time.count() +
+        solver->_d->candidate_fillSolidFields_time.count() +
+        solver->_d->candidate_extrapolate_time.count() +
+        solver->_d->candidate_fillSolidMask_time.count() +
+        solver->_u->candidate_advect_time.count() +
+        solver->_u->candidate_addInFlow_time.count() +
+        solver->_u->candidate_fillSolidFields_time.count() +
+        solver->_u->candidate_extrapolate_time.count() +
+        solver->_u->candidate_fillSolidMask_time.count() +
+        solver->_v->candidate_advect_time.count() +
+        solver->_v->candidate_addInFlow_time.count() +
+        solver->_v->candidate_fillSolidFields_time.count() +
+        solver->_v->candidate_extrapolate_time.count() +
+        solver->_v->candidate_fillSolidMask_time.count()
+        )
+    );
 
     // Terminate
     return 0;

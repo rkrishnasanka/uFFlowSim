@@ -117,6 +117,9 @@ void FluidQuantity::backProject(double &x, double &y, const vector<const SolidBo
 
 void FluidQuantity::advect(double timestep, const FluidQuantity &u, const FluidQuantity &v,
         const vector<const SolidBody *> &bodies) {
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
     for (int iy = 0, idx = 0; iy < _h; iy++) {
         for (int ix = 0; ix < _w; ix++, idx++) {
@@ -132,6 +135,18 @@ void FluidQuantity::advect(double timestep, const FluidQuantity &u, const FluidQ
             }
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate advect time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_advect_time += difference_in_time;
 }
 
 void FluidQuantity::addInflow(double x0, double y0, double x1, double y1, double v) {
@@ -142,6 +157,9 @@ void FluidQuantity::addInflow(double x0, double y0, double x1, double y1, double
     int iy0 = (int)(y0/_hx - _oy);
     int ix1 = (int)(x1/_hx - _ox);
     int iy1 = (int)(y1/_hx - _oy);
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
     //Span though the idices and change the source matrix values
     for (int y = max(iy0, 0); y < min(iy1, _h); y++) {
@@ -160,6 +178,18 @@ void FluidQuantity::addInflow(double x0, double y0, double x1, double y1, double
                 _src[x + y*_w] = vi;
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate addInFlow time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_addInFlow_time += difference_in_time;
 }
 
 void FluidQuantity::addOutflow(double x0, double y0, double x1, double y1, double v) {
@@ -184,6 +214,9 @@ void FluidQuantity::addOutflow(double x0, double y0, double x1, double y1, doubl
 void FluidQuantity::fillSolidFields(const vector<const SolidBody *> &bodies) {
     if (bodies.empty())
         return;
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
     /* Compute distance field first */
     for (int iy = 0, idx = 0; iy <= _h; iy++) {
@@ -234,9 +267,25 @@ void FluidQuantity::fillSolidFields(const vector<const SolidBody *> &bodies) {
                 _cell[idx] = CELL_FLUID;
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate fillSolidFields time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_fillSolidFields_time += difference_in_time;
 }
 
 void FluidQuantity::fillSolidMask() {
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int y = 1; y < _h - 1; y++) {
         for (int x = 1; x < _w - 1; x++) {
             int idx = x + y*_w;
@@ -254,6 +303,18 @@ void FluidQuantity::fillSolidMask() {
                 _mask[idx] |= 2;
         }
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate fillSolidMask time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_fillSolidMask_time += difference_in_time;
 }
 
 double FluidQuantity::extrapolateNormal(int idx) {
@@ -276,6 +337,10 @@ void FluidQuantity::extrapolate() {
     fillSolidMask();
 
     stack<int> border;
+
+    // Start time
+    chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
+
     for (int y = 1; y < _h - 1; y++) {
         for (int x = 1; x < _w - 1; x++) {
             int idx = x + y*_w;
@@ -300,4 +365,16 @@ void FluidQuantity::extrapolate() {
         if (_normalY[idx + _w] < 0.0)
             freeNeighbour(idx + _w, border, 2);
     }
+
+    // End time
+    chrono::time_point<chrono::steady_clock> end_time = chrono::steady_clock::now();
+
+    // Time difference
+    chrono::duration<double> difference_in_time = end_time - begin_time;
+
+    // Print candidate time
+    if (PRINT_CANDIDATES) printf("Candidate extrapolate time: %.10f seconds.\n", difference_in_time.count());
+
+    // Add to aggregate candidate time
+    candidate_extrapolate_time += difference_in_time;
 }
