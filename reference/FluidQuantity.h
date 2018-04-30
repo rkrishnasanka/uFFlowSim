@@ -7,6 +7,7 @@
 #include <stack>
 #include <vector>
 #include <algorithm>
+#include <cstring>
 #include <chrono>
 #include <stdint.h>
 #include <math.h>
