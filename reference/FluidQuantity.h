@@ -10,7 +10,7 @@
 #include <chrono>
 #include <stdint.h>
 #include <math.h>
-#include <omp.h>
+// #include <omp.h>
 
 #include "Functions.h"
 #include "SolidBody.h"

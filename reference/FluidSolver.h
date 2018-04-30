@@ -5,7 +5,7 @@
 
 #include <vector>
 #include <chrono>
-#include <omp.h>
+// #include <omp.h>
 
 #include "Functions.h"
 #include "SolidBody.h"
