@@ -14,9 +14,11 @@ void FluidSolver::buildRhs() {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
-    #pragma omp parallel for
-    for (int y = 0, idx = 0; y < _h; y++) {
-        for (int x = 0; x < _w; x++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int y = 0; y < _h; y++) {
+        for (int x = 0; x < _w; x++) {
+            idx = x + y*_w;
 
             if (cell[idx] == CELL_FLUID) {
                 _r[idx] = -scale*
@@ -78,9 +80,12 @@ void FluidSolver::buildPressureMatrix(double timestep) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
-    #pragma omp parallel for
-    for (int y = 0, idx = 0; y < _h; y++) {
-        for (int x = 0; x < _w; x++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int y = 0; y < _h; y++) {
+        for (int x = 0; x < _w; x++) {
+            idx = x + y*_w;
+
             if (cell[idx] != CELL_FLUID)
                 continue;
             
@@ -124,9 +129,12 @@ void FluidSolver::buildPreconditioner() {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
-    #pragma omp parallel for
-    for (int y = 0, idx = 0; y < _h; y++) {
-        for (int x = 0; x < _w; x++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int y = 0; y < _h; y++) {
+        for (int x = 0; x < _w; x++) {
+            idx = x + y*_w;
+
             if (cell[idx] != CELL_FLUID)
                 continue;
             
@@ -178,9 +186,12 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
-    #pragma omp parallel for
-    for (int y = 0, idx = 0; y < _h; y++) {
-        for (int x = 0; x < _w; x++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int y = 0; y < _h; y++) {
+        for (int x = 0; x < _w; x++) {
+            idx = x + y*_w;
+
             if (cell[idx] != CELL_FLUID)
                 continue;
             
@@ -200,9 +211,12 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
 
     // We take t again from from the previous loop where we modified 
     // dst to accumulate the result onto it
-    #pragma omp parallel for
-    for (int y = _h - 1, idx = _w*_h - 1; y >= 0; y--) {
-        for (int x = _w - 1; x >= 0; x--, idx--) {
+    int idx = _w*_h - 1;
+    #pragma omp parallel for private(idx)
+    for (int y = _h - 1 ; y >= 0; y--) {
+        for (int x = _w - 1; x >= 0; x--) {
+            idx = x + y*_w;
+
             if (cell[idx] != CELL_FLUID)
                 continue;
             
@@ -260,9 +274,12 @@ void FluidSolver::matrixVectorProduct(double *dst, double *b) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
-    #pragma omp parallel for
-    for (int y = 0, idx = 0; y < _h; y++) {
-        for (int x = 0; x < _w; x++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int y = 0; y < _h; y++) {
+        for (int x = 0; x < _w; x++) {
+            idx = x + y*_w;
+
             double t = _aDiag[idx]*b[idx];
             
             if (x > 0)
@@ -384,9 +401,12 @@ void FluidSolver::applyPressure(double timestep) {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
-    #pragma omp parallel for
-    for (int y = 0, idx = 0; y < _h; y++) {
-        for (int x = 0; x < _w; x++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int y = 0; y < _h; y++) {
+        for (int x = 0; x < _w; x++) {
+            idx = x + y*_w;
+
             if (cell[idx] != CELL_FLUID)
                 continue;
             
@@ -423,9 +443,12 @@ void FluidSolver::setBoundaryCondition() {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
-    #pragma omp parallel for
+    int idx = 0;
+    #pragma omp parallel for private(idx)
     for (int y = 0, idx = 0; y < _h; y++) {
         for (int x = 0; x < _w; x++, idx++) {
+            idx = x + y*_w;
+
             if (cell[idx] == CELL_SOLID) {
                 const SolidBody &b = *_bodies[body[idx]];
                 
