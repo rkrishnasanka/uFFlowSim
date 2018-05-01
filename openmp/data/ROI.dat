@@ -1,0 +1,10 @@
+# Total time: 95.9248774370 seconds.
+# Candidate times:
+1 1.315562             buildRHS
+2 34.870554            applyPreconditioner
+3 4.984758             dotProduct
+4 10.939922            matrixVectorProduct
+5 5.806564             scaleAdd
+6 2.466773             infinityNorm
+7 17.219860            advect
+8 16.342343            fillSolidFields

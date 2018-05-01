@@ -60,7 +60,6 @@ int main(int argc, char * argv[]) {
 
     vector<SolidBody *> bodies;
     double t;
-    double xIn, yIn, wIn, hIn, dIn, uIn, vIn;
     double xOut, yOut, wOut, hOut, dOut, uOut, vOut;
     double posX, posY, scaleX, scaleY, theta, velX, velY, velTheta;
     string cmd;
@@ -111,14 +110,6 @@ int main(int argc, char * argv[]) {
             }
         }
     } else { // Default cases for debugging 
-        xIn = 0.45;
-        yIn = 0.20;
-        wIn = 0.15;
-        hIn = 0.03;
-        dIn = 1.0;
-        uIn = 0.0;
-        vIn = 3.0;
-
         bodies.push_back(new SolidSphere(0.6, 0.7, 0.4, 0.1, M_PI*0.25, 0.0, 0.0, 0.0));
         bodies.push_back(new SolidSphere(0.1, 0.2, 0.1, 0.1, M_PI*0.1, 0.0, 0.0, 0.0));
     }
@@ -131,6 +122,7 @@ int main(int argc, char * argv[]) {
 
     double time = 0.0;
     int iterations = 0;
+    int loopIterations = 0;
 
     chrono::duration<double> difference_in_time;
    
@@ -143,11 +135,11 @@ int main(int argc, char * argv[]) {
 
         // Main iteration loop
         for (int i = 0; i < 4; i++) {
-            //SETTING THE SOURCE AND SINKS
             solver->addInflow(xIn, yIn, wIn, hIn, dIn, uIn, vIn);
-            // solver->addOutflow(xOut, yOut, wOut, hOut, dOut, uOut, vOut);
-
             solver->update(timestep);
+
+            loopIterations += solver->_iters;
+            // printf("%d\n", loopIterations);
 
             time += timestep;
             fflush(stdout);
@@ -171,54 +163,56 @@ int main(int argc, char * argv[]) {
 
     // Print timing results
     printf("Total time: %.10f seconds.\n", difference_in_time.count());
+    printf("Total iterations: %d\n", loopIterations);
+    printf("Average iterations per timestep: %d\n", (int)(loopIterations / (t / timestep)));
 
     // Print candidate results
-    printf("Candidate times:\n");
+    printf("Candidate time percentages (seconds/total):\n");
 
-    printf("%-20f candidate_buildRHS_time\n", solver->candidate_buildRHS_time.count());
-    printf("%-20f candidate_buildPressureMatrix_time\n", solver->candidate_buildPressureMatrix_time.count());
-    printf("%-20f candidate_buildPreconditioner_time\n", solver->candidate_buildPreconditioner_time.count());
-    printf("%-20f candidate_applyPreconditioner_time\n", solver->candidate_applyPreconditioner_time.count());
-    printf("%-20f candidate_dotProduct_time\n", solver->candidate_dotProduct_time.count());
-    printf("%-20f candidate_matrixVectorProduct_time\n", solver->candidate_matrixVectorProduct_time.count());
-    printf("%-20f candidate_scaleAdd_time\n", solver->candidate_scaleAdd_time.count());
-    printf("%-20f candidate_infinityNorm_time\n", solver->candidate_infinityNorm_time.count());
-    printf("%-20f candidate_applyPressure_time\n", solver->candidate_applyPressure_time.count());
-    printf("%-20f candidate_setBoundaryCondition_time\n", solver->candidate_setBoundaryCondition_time.count());
+    printf("%-20f candidate_buildRHS_time\n", solver->candidate_buildRHS_time.count() / difference_in_time.count());
+    printf("%-20f candidate_buildPressureMatrix_time\n", solver->candidate_buildPressureMatrix_time.count() / difference_in_time.count());
+    printf("%-20f candidate_buildPreconditioner_time\n", solver->candidate_buildPreconditioner_time.count() / difference_in_time.count());
+    printf("%-20f candidate_applyPreconditioner_time\n", solver->candidate_applyPreconditioner_time.count() / difference_in_time.count());
+    printf("%-20f candidate_dotProduct_time\n", solver->candidate_dotProduct_time.count() / difference_in_time.count());
+    printf("%-20f candidate_matrixVectorProduct_time\n", solver->candidate_matrixVectorProduct_time.count() / difference_in_time.count());
+    printf("%-20f candidate_scaleAdd_time\n", solver->candidate_scaleAdd_time.count() / difference_in_time.count());
+    printf("%-20f candidate_infinityNorm_time\n", solver->candidate_infinityNorm_time.count() / difference_in_time.count());
+    printf("%-20f candidate_applyPressure_time\n", solver->candidate_applyPressure_time.count() / difference_in_time.count());
+    printf("%-20f candidate_setBoundaryCondition_time\n", solver->candidate_setBoundaryCondition_time.count() / difference_in_time.count());
 
     printf("%-20f candidate_advect_time\n", (
         solver->_d->candidate_advect_time.count() + 
         solver->_u->candidate_advect_time.count() + 
         solver->_v->candidate_advect_time.count() 
-        )
+        ) / difference_in_time.count()
     );
 
     printf("%-20f candidate_addInFlow_time\n", (
         solver->_d->candidate_addInFlow_time.count() + 
         solver->_u->candidate_addInFlow_time.count() + 
         solver->_v->candidate_addInFlow_time.count()
-        )
+        ) / difference_in_time.count()
     );
 
     printf("%-20f candidate_fillSolidFields_time\n", (
         solver->_d->candidate_fillSolidFields_time.count() + 
         solver->_u->candidate_fillSolidFields_time.count() + 
         solver->_v->candidate_fillSolidFields_time.count()
-        )
+        ) / difference_in_time.count()
     );
 
     printf("%-20f candidate_extrapolate_time\n", (
         solver->_d->candidate_extrapolate_time.count() + 
         solver->_u->candidate_extrapolate_time.count() + 
         solver->_v->candidate_extrapolate_time.count()
-        )
+        ) / difference_in_time.count()
     );
 
     printf("%-20f candidate_fillSolidMask_time\n", (
         solver->_d->candidate_fillSolidMask_time.count() + 
         solver->_u->candidate_fillSolidMask_time.count() + 
         solver->_v->candidate_fillSolidMask_time.count()
-        )
+        ) / difference_in_time.count()
     );
 
     printf("%-20f total\n", (
@@ -247,7 +241,7 @@ int main(int argc, char * argv[]) {
         solver->_v->candidate_fillSolidFields_time.count() +
         solver->_v->candidate_extrapolate_time.count() +
         solver->_v->candidate_fillSolidMask_time.count()
-        )
+        ) / difference_in_time.count()
     );
 
     // Terminate

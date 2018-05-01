@@ -21,6 +21,8 @@ public:
     
     int _w;
     int _h;
+
+    int _iters;
     
     double _hx;
     double _density;

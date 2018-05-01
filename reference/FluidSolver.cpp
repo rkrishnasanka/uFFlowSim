@@ -360,7 +360,8 @@ void FluidSolver::project(int limit) {
         //Note: Potential || candidate
         maxError = infinityNorm(_r);
         if (maxError < 1e-5) {
-            printf("Exiting solver after %d iterations, maximum error is %f\n", iter, maxError);
+            // printf("Exiting solver after %d iterations, maximum error is %f\n", iter, maxError);
+            _iters = iter;
             return;
         }
         
