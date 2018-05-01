@@ -211,7 +211,7 @@ void FluidSolver::applyPreconditioner(double *dst, double *a) {
 
     // We take t again from from the previous loop where we modified 
     // dst to accumulate the result onto it
-    int idx = _w*_h - 1;
+    idx = _w*_h - 1;
     #pragma omp parallel for private(idx)
     for (int y = _h - 1 ; y >= 0; y--) {
         for (int x = _w - 1; x >= 0; x--) {
@@ -445,8 +445,8 @@ void FluidSolver::setBoundaryCondition() {
 
     int idx = 0;
     #pragma omp parallel for private(idx)
-    for (int y = 0, idx = 0; y < _h; y++) {
-        for (int x = 0; x < _w; x++, idx++) {
+    for (int y = 0; y < _h; y++) {
+        for (int x = 0; x < _w; x++) {
             idx = x + y*_w;
 
             if (cell[idx] == CELL_SOLID) {

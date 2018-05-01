@@ -121,9 +121,11 @@ void FluidQuantity::advect(double timestep, const FluidQuantity &u, const FluidQ
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
-    #pragma omp parallel for
-    for (int iy = 0, idx = 0; iy < _h; iy++) {
-        for (int ix = 0; ix < _w; ix++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int iy = 0; iy < _h; iy++) {
+        for (int ix = 0; ix < _w; ix++) {
+            idx = ix + iy*_w;
             if (_cell[idx] == CELL_FLUID) {
                 double x = ix + _ox;
                 double y = iy + _oy;
@@ -221,9 +223,12 @@ void FluidQuantity::fillSolidFields(const vector<const SolidBody *> &bodies) {
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
     
     /* Compute distance field first */
-    #pragma omp parallel for
-    for (int iy = 0, idx = 0; iy <= _h; iy++) {
-        for (int ix = 0; ix <= _w; ix++, idx++) {
+    int idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int iy = 0; iy <= _h; iy++) {
+        for (int ix = 0; ix <= _w; ix++) {
+            idx = ix + iy*_w;
+
             double x = (ix + _ox - 0.5)*_hx;
             double y = (iy + _oy - 0.5)*_hx;
             
@@ -233,9 +238,12 @@ void FluidQuantity::fillSolidFields(const vector<const SolidBody *> &bodies) {
         }
     }
     
-    #pragma omp parallel for
-    for (int iy = 0, idx = 0; iy < _h; iy++) {
-        for (int ix = 0; ix < _w; ix++, idx++) {
+    idx = 0;
+    #pragma omp parallel for private(idx)
+    for (int iy = 0; iy < _h; iy++) {
+        for (int ix = 0; ix < _w; ix++) {
+            idx = ix + iy*_w;
+
             double x = (ix + _ox)*_hx;
             double y = (iy + _oy)*_hx;
             
@@ -290,10 +298,11 @@ void FluidQuantity::fillSolidMask() {
     // Start time
     chrono::time_point<chrono::steady_clock> begin_time = chrono::steady_clock::now();
 
-    #pragma omp parallel for
+    int idx = 0;
+    #pragma omp parallel for private(idx)
     for (int y = 1; y < _h - 1; y++) {
         for (int x = 1; x < _w - 1; x++) {
-            int idx = x + y*_w;
+            idx = x + y*_w;
             
             if (_cell[idx] == CELL_FLUID)
                 continue;
