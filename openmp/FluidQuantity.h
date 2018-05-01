@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <omp.h>
+#include <stdio.h>
 
 #include "Functions.h"
 #include "SolidBody.h"

@@ -1,14 +1,27 @@
 #!/bin/sh
-# X=0.0 # Reference X coordinate in top left corner
-# Y=0.0 # Reference Y coordinate in top left corner
-# W=1.0 # Centered
-# H=0.1 # Y delta from top; doesn't work is set smaller
-# D=0.1 # Quantity of fluid coming from source
-# U=0.0 # X direction of flow magnitude
-# V=3.0 # Y direction of flow magnitude
 
-./curved-boundaries figure1.csv
-rm output1.gif
-ffmpeg -loglevel panic -i Frame00%03d.png output1.gif
-rm *.png
-echo "Done."
+# ./curved-boundaries figure1.csv
+# rm output1.gif
+# ffmpeg -loglevel panic -i Frame00%03d.png output1.gif
+# rm *.png
+# echo "Done."
+
+for f in ./components/*.csv;
+
+do
+    cores=1
+
+    while [ $cores -le 8 ]
+    do
+        export OMP_NUM_THREADS=$cores
+        echo "Running File: $f, Cores: $OMP_NUM_THREADS" 
+        ./curved-boundaries $f
+        ffmpeg -loglevel panic -i Frame00%03d.png output.gif
+        rm *.png
+        mv output.gif 'results/output_'$(basename $f)'_'$cores'.gif';
+        echo "=========Done=========="
+        ((cores*=2))
+    done
+
+
+done

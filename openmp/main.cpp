@@ -62,6 +62,7 @@ int main(int argc, char * argv[]) {
     double t;
     double xOut, yOut, wOut, hOut, dOut, uOut, vOut;
     double posX, posY, scaleX, scaleY, theta, velX, velY, velTheta;
+    double xIn, yIn, wIn, hIn, dIn, uIn, vIn;
     string cmd;
 
     // Accepts file from command line with parameters
