@@ -60,6 +60,7 @@ int main(int argc, char * argv[]) {
 
     vector<SolidBody *> bodies;
     double t;
+    double xIn, yIn, wIn, hIn, dIn, uIn, vIn;
     double xOut, yOut, wOut, hOut, dOut, uOut, vOut;
     double posX, posY, scaleX, scaleY, theta, velX, velY, velTheta;
     string cmd;
