@@ -47,7 +47,18 @@ public:
 
 class SolidSphere: public SolidBody {
 public:
-    
+    /**
+     * @brief Construct a new Solid Sphere object
+     * 
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param sx width (??)
+     * @param sy height (??)
+     * @param t rotation angle
+     * @param vx X velocity
+     * @param vy Y velocity
+     * @param vt rotaional velocity (??)
+     */
     SolidSphere(double x, double y, double sx, double sy, double t, double vx, double vy, double vt) :
         SolidBody(x, y, sx, sy, t, vx, vy, vt) {}
     

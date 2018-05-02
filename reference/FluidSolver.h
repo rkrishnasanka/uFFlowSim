@@ -2,6 +2,7 @@
 #define FLUIDSOLVER_H
 
 #include <vector>
+#include <stdio.h>
 
 #include "Functions.h"
 #include "SolidBody.h"

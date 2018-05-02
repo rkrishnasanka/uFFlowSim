@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <stdint.h>
 #include <math.h>
+#include <cstring>
 
 #include "Functions.h"
 #include "SolidBody.h"

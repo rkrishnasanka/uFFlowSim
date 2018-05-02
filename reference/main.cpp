@@ -37,9 +37,11 @@ ng_vector_mpi.cpp
 #include <math.h>
 #include <stack>
 #include <chrono>
+#include <fstream>
+#include <iostream>
 
 #include "./lodepng/lodepng.h"
-#include "csv.h"
+#include "json.hpp"
 
 #include "Functions.h"
 #include "SolidBody.h"
@@ -47,6 +49,7 @@ ng_vector_mpi.cpp
 #include "FluidSolver.h"
 
 using namespace std;
+using json = nlohmann::json;
 
 int main(int argc, char * argv[]) {
     /* Play with these constants, if you want */
@@ -61,71 +64,171 @@ int main(int argc, char * argv[]) {
     vector<SolidBody *> bodies;
     double t;
     double xIn, yIn, wIn, hIn, dIn, uIn, vIn;
-    double xOut, yOut, wOut, hOut, dOut, uOut, vOut;
+    // double xOut, yOut, wOut, hOut, dOut, uOut, vOut;
     double posX, posY, scaleX, scaleY, theta, velX, velY, velTheta;
-    string cmd;
 
     // Accepts file from command line with parameters
-    if (argc > 1) { 
-        io::CSVReader<9> in(argv[1]);
+    // if (argc > 1) { 
+    //     io::CSVReader<9> in(argv[1]);
+    // 
+    //     while (in.read_row(cmd, posX, posY, scaleX, scaleY, theta, velX, velY, velTheta)) {
+    //         // Specifies source parameters
+    //         if (cmd == "inflow") {
+    //             xIn = posX;
+    //             yIn = posY;
+    //             wIn = scaleX;
+    //             hIn = scaleY;
+    //             dIn = theta;
+    //             uIn = velX;
+    //             vIn = velY;
+    //         } 
+    //         // Specifies sink parameters
+    //         else if (cmd == "outflow") {
+    //             xOut = posX;
+    //             yOut = posY;
+    //             wOut = scaleX;
+    //             hOut = scaleY;
+    //             dOut = theta;
+    //             uOut = velX;
+    //             vOut = velY;
+    //         } 
+    //         // Specifies matrix properties
+    //         else if (cmd == "matrix") {
+    //             sizeX = (int)posX;
+    //             sizeY = (int)posY;
+    //             density = scaleX;
+    //             timestep = scaleY;
+    //             t = theta;
+    //         }
+    //         // Adds sphere object to grid
+    //         else if (cmd == "circle") {
+    //             bodies.push_back(new SolidSphere(posX, posY, scaleX, scaleY, M_PI*theta, velX, velY, velTheta));
+    //         } 
+    //         // Adds box object to grid
+    //         else if (cmd == "box") {
+    //             bodies.push_back(new SolidBox(posX, posY, scaleX, scaleY, M_PI*theta, velX, velY, velTheta));                
+    //         } 
+    //         else {
+    //             printf("Invalid command; ignoring line.\n");
+    //         }
+    //     }
+    // } else { // Default cases for debugging 
+    //     xIn = 0.45;
+    //     yIn = 0.20;
+    //     wIn = 0.15;
+    //     hIn = 0.03;
+    //     dIn = 1.0;
+    //     uIn = 0.0;
+    //     vIn = 3.0;
 
-        while (in.read_row(cmd, posX, posY, scaleX, scaleY, theta, velX, velY, velTheta)) {
-            // Specifies source parameters
-            if (cmd == "inflow") {
-                xIn = posX;
-                yIn = posY;
-                wIn = scaleX;
-                hIn = scaleY;
-                dIn = theta;
-                uIn = velX;
-                vIn = velY;
-            } 
-            // Specifies sink parameters
-            else if (cmd == "outflow") {
-                xOut = posX;
-                yOut = posY;
-                wOut = scaleX;
-                hOut = scaleY;
-                dOut = theta;
-                uOut = velX;
-                vOut = velY;
-            } 
-            // Specifies matrix properties
-            else if (cmd == "matrix") {
-                sizeX = (int)posX;
-                sizeY = (int)posY;
-                density = scaleX;
-                timestep = scaleY;
-                t = theta;
-            }
-            // Adds sphere object to grid
-            else if (cmd == "circle") {
-                bodies.push_back(new SolidSphere(posX, posY, scaleX, scaleY, M_PI*theta, velX, velY, velTheta));
-            } 
-            // Adds box object to grid
-            else if (cmd == "box") {
-                bodies.push_back(new SolidBox(posX, posY, scaleX, scaleY, M_PI*theta, velX, velY, velTheta));                
-            } 
-            else {
-                printf("Invalid command; ignoring line.\n");
-            }
-        }
-    } else { // Default cases for debugging 
-        xIn = 0.45;
-        yIn = 0.20;
-        wIn = 0.15;
-        hIn = 0.03;
-        dIn = 1.0;
-        uIn = 0.0;
-        vIn = 3.0;
-
-        bodies.push_back(new SolidSphere(0.6, 0.7, 0.4, 0.1, M_PI*0.25, 0.0, 0.0, 0.0));
-        bodies.push_back(new SolidSphere(0.1, 0.2, 0.1, 0.1, M_PI*0.1, 0.0, 0.0, 0.0));
-    }
+    //     bodies.push_back(new SolidSphere(0.6, 0.7, 0.4, 0.1, M_PI*0.25, 0.0, 0.0, 0.0));
+    //     bodies.push_back(new SolidSphere(0.1, 0.2, 0.1, 0.1, M_PI*0.1, 0.0, 0.0, 0.0));
+    // }
     
+    std::ifstream i(argv[1]);
+    json componentjson;
+    i >> componentjson;
+
+    //Read the component information
+    sizeX = (int) componentjson["xspan"];
+    sizeY = (int) componentjson["yspan"];
+    density = componentjson["density"];
+
+    timestep = componentjson["timestep"];
+    t = componentjson["time"];
+
+    json obstacles = componentjson["obstacles"];
+
+    //Reading all the obstacles
+    for(int i =0 ; i<obstacles.size(); i++){
+        json obstaclejson = obstacles.at(i);
+        
+        std::cout << "Creating a " << obstaclejson["type"] << std::endl;
+        
+        string type = obstaclejson["type"];
+
+        cout << type << endl;
+
+        if (type.compare(string("box")) == 0){
+            std::cout << "Found a box" << std::endl;
+
+            bodies.push_back(new SolidBox(
+                obstaclejson["x"], 
+                obstaclejson["y"], 
+                obstaclejson["w"], 
+                obstaclejson["h"], 
+                M_PI * (double) obstaclejson["theta"] , 
+                0, 
+                0, 
+                0)
+            );
+
+            cout << "x: " <<  obstaclejson["x"] << endl;
+            cout << "y: " <<  obstaclejson["y"] << endl;
+            cout << "w: " <<  obstaclejson["w"] << endl;
+            cout << "h: " <<  obstaclejson["h"] << endl;
+            cout << "theta: " << obstaclejson["theta"] << endl;
+
+            std::cout << "Created a b" << std::endl;           
+
+        } else if (type.compare(string("circle"))== 0){
+            std::cout << "Found a cicle" << std::endl;
+            bodies.push_back(new SolidSphere(
+                obstaclejson["x"], 
+                obstaclejson["y"], 
+                obstaclejson["radius"], 
+                0, 
+                0, 
+                0, 
+                0, 
+                0)
+            );
+
+            cout << "x: " <<  obstaclejson["x"] << endl;
+            cout << "y: " <<  obstaclejson["y"] << endl;
+            cout << "radius: " << obstaclejson["radius"] <<endl;
+
+            std::cout << "Created a c" << std::endl;
+        }
+    }
+
+    json ports = componentjson["ports"];
+    
+    //Reading all the obstacles
+    for(int i =0 ; i<ports.size(); i++){
+        json portjson = ports.at(i);
+            std::cout << "Creating a port " << portjson["type"] << std::endl;
+        string type = portjson["type"];
+
+            std::cout <<"x: " << portjson["x"]  << std::endl;
+            std::cout <<"y: " << portjson["y"]  << std::endl;
+            std::cout <<"w: " << portjson["w"]  << std::endl;
+            std::cout <<"h: " << portjson["h"]  << std::endl;
+            std::cout <<"rate: "  << portjson["rate"]  << std::endl;
+            std::cout <<"ux: " << portjson["ux"]  << std::endl;
+            std::cout <<"uy: " << portjson["uy"]  << std::endl;
+        
+
+        //Type Inlet
+        if(type.compare(string("IN"))==0){
+            xIn = portjson["x"];
+            yIn = portjson["y"];
+            wIn = portjson["w"];
+            hIn = portjson["h"];
+            dIn = portjson["rate"];
+            uIn = portjson["ux"];
+            vIn = portjson["uy"];
+        }
+    }
+
     vector<const SolidBody *> cBodies;
     for (unsigned i = 0; i < bodies.size(); i++)
         cBodies.push_back(bodies[i]);
+
+    std::cout << "Number of obstacles: " << cBodies.size() << std::endl;
+    std::cout << "Size X: " << sizeX << std::endl;
+    std::cout << "Size Y: " << sizeY << std::endl;
+    std::cout << "Density: " << density << std::endl;
 
     FluidSolver * solver = new FluidSolver(sizeX, sizeY, density, cBodies);
 
@@ -134,7 +237,6 @@ int main(int argc, char * argv[]) {
 
     chrono::duration<double> difference_in_time;
    
-    
     while (time < t) {
 
     	// Start time
@@ -144,7 +246,6 @@ int main(int argc, char * argv[]) {
         for (int i = 0; i < 4; i++) {
             //SETTING THE SOURCE AND SINKS
             solver->addInflow(xIn, yIn, wIn, hIn, dIn, uIn, vIn);
-            solver->addOutflow(xOut, yOut, wOut, hOut, dOut, uOut, vOut);
 
             solver->update(timestep);
 

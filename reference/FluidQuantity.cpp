@@ -1,4 +1,5 @@
 #include "FluidQuantity.h"
+#include <iostream>
 
 double FluidQuantity::lerp(double a, double b, double x) const {
     return a*(1.0 - x) + b*x;
@@ -57,6 +58,7 @@ const uint8_t * FluidQuantity::body() const {
 }
 
 double FluidQuantity::at(int x, int y) const {
+    std::cout << "X: "<<  x << " Y: " << y << std::endl; 
     return _src[x + y*_w];
 }
 
@@ -127,6 +129,11 @@ void FluidQuantity::advect(double timestep, const FluidQuantity &u, const FluidQ
                 rungeKutta3(x, y, timestep, u, v);
                 
                 backProject(x, y, bodies);
+                
+                cout << "ix: " << ix 
+                 << " iy: " << iy 
+                 << " ox: " << _ox 
+                 << " oy: " << _oy << endl;
                 
                 _dst[idx] = cerp(x, y);
             }
